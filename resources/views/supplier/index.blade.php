@@ -6,6 +6,7 @@
             <h3 class="card-title">{{ $page->title }}</h3>
             <div class="card-tools">
                 <a class="btn btn-sm btn-primary mt-1" href="{{ url('supplier/create') }}">Tambah</a>
+                <button onclick="modalAction('{{ url('/supplier/create_ajax') }}')" class="btn btn-sm btn-success mt-1">Tambah Ajax</button>
             </div>
         </div>
         <div class="card-body">
@@ -29,6 +30,12 @@
             </table>
         </div>
     </div>
+    <div id="modal-crud" class="modal fade animate shake" tabindex="-1" role="dialog" data-backdrop="static"
+        data-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content"></div>
+        </div>
+    </div>
 @endsection
 
 @push('css')
@@ -36,8 +43,23 @@
 
 @push('js')
     <script>
+        function modalAction(url) {
+            $("#modal-crud .modal-content").html("");
+            $.get(url, function (response) {
+                $("#modal-crud .modal-content").html(response);
+                $("#modal-crud").modal("show");
+            });
+        }
+
+        // Bersihkan isi modal setelah ditutup
+        $('#modal-crud').on('hidden.bs.modal', function () {
+            $("#modal-crud .modal-content").html("");
+        });
+
+
+        var dataSupplier
         $(document).ready(function () {
-            var dataSupplier = $('#table_supplier').DataTable({
+            dataSupplier = $('#table_supplier').DataTable({
                 serverSide: true,
                 ajax: {
                     url: "{{ url('supplier/list') }}",
