@@ -51,7 +51,6 @@
             });
         }
 
-        // Bersihkan isi modal setelah ditutup
         $('#modal-crud').on('hidden.bs.modal', function () {
             $("#modal-crud .modal-content").html("");
         });

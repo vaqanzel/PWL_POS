@@ -6,19 +6,22 @@
             <h3 class="card-title">{{ $page->title }}</h3>
             <div class="card-tools">
                 <a class="btn btn-sm btn-primary mt-1" href="{{ url('user/create') }}">Tambah</a>
-                <button onclick="modalAction('{{ url('user/create_ajax') }}')" class="btn btn-sm btn-success mt-1">Tambah Ajax</button>
+                <button onclick="modalAction('{{ url('/user/create_ajax') }}')" class="btn btn-sm btn-success mt-1">
+                    Tambah Ajax
+                </button>
             </div>
         </div>
         <div class="card-body">
-            @if(session('error'))
-                <div class="alert alert-danger">
-                    {{ session('error') }}
-                </div>
+            @if (session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+            @if (session('error'))
+                <div class="alert alert-danger">{{ session('error') }}</div>
             @endif
             <div class="row">
                 <div class="col-md-12">
                     <div class="form-group row">
-                        <label class="col-1 control-label col-form-label">Filter: </label>
+                        <label class="col-1 control-label col-form-label">Filter:</label>
                         <div class="col-3">
                             <select class="form-control" id="level_id" name="level_id" required>
                                 <option value="">- Semua -</option>
@@ -31,11 +34,7 @@
                     </div>
                 </div>
             </div>
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
+
             <table class="table table-bordered table-striped table-hover table-sm" id="table_user">
                 <thead>
                     <tr>
@@ -49,8 +48,12 @@
             </table>
         </div>
     </div>
-    <div id="myModal" class="modal fade animate shake" tabindex="-1" role="dialog" databackdrop="static"
-        data-keyboard="false" data-width="75%" aria-hidden="true"></div>
+    <div id="modal-crud" class="modal fade animate shake" tabindex="-1" role="dialog" data-backdrop="static"
+        data-keyboard="false" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content"></div>
+        </div>
+    </div>
 @endsection
 
 @push('css')
@@ -58,57 +61,36 @@
 
 @push('js')
     <script>
-        function modalAction(url = '') {
-            $('#myModal').load(url, function () {
-                $('#myModal').modal('show');
+        function modalAction(url) {
+            $("#modal-crud .modal-content").html("");
+            $.get(url, function (response) {
+                $("#modal-crud .modal-content").html(response);
+                $("#modal-crud").modal("show");
             });
         }
-        var dataUser;
+        $('#modal-crud').on('hidden.bs.modal', function () {
+            $("#modal-crud .modal-content").html("");
+        });
+
+        var dataUSer;
         $(document).ready(function () {
-            dataUser = $('#table_user').DataTable({
-                // serverSide: true, jika ingin menggunakan server side processing
+                dataUser = $('#table_user').DataTable({
                 serverSide: true,
                 ajax: {
-                    "url": "{{ url('user/list') }}",
-                    "dataType": "json",
-                    "type": "POST",
-                    "data": function (d) {
+                    url: "{{ url('user/list') }}",
+                    dataType: "json",
+                    type: "POST",
+                    data: function (d) {
                         d.level_id = $('#level_id').val();
                     }
                 },
                 columns: [
-                    // nomor urut dari laravel datatable addIndexColumn()
-                    {
-                        data: 'DT_RowIndex',
-                        className: 'text-center',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'username',
-                        className: '',
-                        orderable: true,
-                        searchable: true
-                    },
-                    {
-                        data: 'nama',
-                        className: '',
-                        orderable: true,
-                        searchable: true
-                    },
-                    // mengambil data level hasil dari relasi
-                    {
-                        data: 'level.level_nama',
-                        className: '',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'aksi',
-                        className: '',
-                        orderable: false,
-                        searchable: false
-                    },]
+                    { data: "DT_RowIndex", className: "text-center", orderable: false, searchable: false },
+                    { data: "username", className: "", orderable: true, searchable: true },
+                    { data: "nama", className: "", orderable: true, searchable: true },
+                    { data: "level.level_nama", className: "", orderable: false, searchable: false },
+                    { data: "aksi", className: "", orderable: false, searchable: false }
+                ]
             });
             $('#level_id').on('change', function () {
                 dataUser.ajax.reload();

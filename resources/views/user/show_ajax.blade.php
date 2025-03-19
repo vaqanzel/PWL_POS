@@ -42,10 +42,8 @@
                 <td class="col-9">********</td>
             </tr>
         </table>
-    </div>
     <div class="modal-footer">
-        <!-- <button onclick="modalAction('{{ url('/user/' . $user->user_id . '/edit_ajax') }}')"  -->
-         
+        <button onclick="modalAction('{{ url('/user/' . $user->user_id . '/edit_ajax') }}')" 
             class="btn btn-success btn-sm">Edit
         </button>
         <button type="button" data-dismiss="modal" class="btn btn-primary btn-sm">Close</button>
