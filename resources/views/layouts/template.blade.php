@@ -87,7 +87,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <a href="/logout" class="btn btn-danger">Logout</a>
+                    <a href="http://localhost/PWL_POS/public/logout" class="btn btn-danger">Logout</a>
                 </div>
             </div>
         </div>

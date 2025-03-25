@@ -22,8 +22,19 @@ Route::middleware(['auth'])->group(function () { // artinya semua route di dalam
 
     // masukkan semua route yang perlu autentikasi di sini
 
-    Route::get('/', [WelcomeController::class, 'index']);
 
+    Route::get('/', [WelcomeController::class, 'index']);
+    // route level
+    // artinya semua route di dalam group ini harus punya role ADM (Administrator)
+    Route::middleware(['authorize:ADM'])->group(function () {
+        Route::get('/level', [LevelController::class, 'index']);
+        Route::post('/level/list', [LevelController::class, 'list']); // untuk list json datatables
+        Route::get('/level/create', [LevelController::class, 'create']);
+        Route::post('/level', [LevelController::class, 'store']);
+        Route::get('/level/{id}/edit', [LevelController::class, 'edit']); // untuk tampilkan form edit
+        Route::put('/level/{id}', [LevelController::class, 'update']); // untuk proses update data
+        Route::delete('/level/{id}', [LevelController::class, 'destroy']); // untuk proses hapus data
+    });
     Route::group(['prefix' => 'user'], function () {
         Route::get('/', [UserController::class, 'index']);
         Route::post('/list', [UserController::class, 'list']);
@@ -43,6 +54,7 @@ Route::middleware(['auth'])->group(function () { // artinya semua route di dalam
     });
 
     Route::group(['prefix' => 'level'], function () {
+        // Route::middleware(['authorize:ADM'])->group(function)
         Route::get('/', [LevelController::class, 'index']);
         Route::post('/list', [LevelController::class, 'list']);
         Route::get('/create', [LevelController::class, 'create']);
