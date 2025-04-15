@@ -40,9 +40,9 @@ class LevelController extends Controller
 
         return DataTables::of($levels)
             ->addIndexColumn()->addColumn('aksi', function ($level) {
-                $btn = '<button onclick="modalAction(\'' . url('/level/' . $level->level_id .'/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/level/' . $level->level_id .'/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/level/' . $level->level_id .'/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
+                $btn = '<button onclick="modalAction(\'' . url('/level/' . $level->level_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/level/' . $level->level_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/level/' . $level->level_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
                 return $btn;
             })->rawColumns(['aksi'])
             ->make(true);
@@ -223,26 +223,26 @@ class LevelController extends Controller
                 'level_nama' => 'required|string|max:100',
                 'level_kode' => 'required|string|max:5|unique:m_level,level_kode,' . $id . ',level_id'
             ];
-    
+
             $messages = [
                 'level_kode.unique' => 'Kode Sudah Digunakan'
             ];
-    
+
             $validator = Validator::make($request->all(), $rules, $messages);
-    
+
             if ($validator->fails()) {
                 $errorMessage = 'Validasi Gagal';
                 if ($validator->errors()->has('level_kode')) {
                     $errorMessage = 'Validasi Gagal (Kode Sudah Digunakan)';
                 }
-    
+
                 return response()->json([
                     'status' => false,
                     'message' => $errorMessage,
                     'msgField' => $validator->errors()
                 ]);
             }
-    
+
             $level = LevelModel::find($id);
             if ($level) {
                 $level->update($request->all());
@@ -253,7 +253,7 @@ class LevelController extends Controller
         }
         return redirect('/');
     }
-    
+
 
 
     public function confirm_ajax(string $id)
@@ -289,7 +289,7 @@ class LevelController extends Controller
         }
         return redirect('/');
     }
-    
+
     // Menghapus data level
     public function destroy(string $id)
     {
@@ -362,5 +362,50 @@ class LevelController extends Controller
             }
         }
         return redirect('/');
+    }
+    public function export_excel()
+    {
+        $level = LevelModel::select('level_id', 'level_kode', 'level_nama')
+            ->orderBy('level_id')
+            ->orderBy('level_kode')
+            ->get();
+
+        // load library excel 
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet(); //ambol sheet yang aktif
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'Kode level');
+        $sheet->setCellValue('C1', 'Nama level');
+
+        $sheet->getStyle('A1:C1')->getFont()->setBold(true); //bold header
+        $no = 1;
+        $baris = 2;
+
+        foreach ($level as $key => $data) {
+            $sheet->setCellValue('A' . $baris, $no);
+            $sheet->setCellValue('B' . $baris, $data->level_kode);
+            $sheet->setCellValue('C' . $baris, $data->level_nama);
+            $no++;
+            $baris++;
+        }
+        foreach (range('A', 'C') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $sheet->setTitle('Data level');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $filename = 'Data level_' . date('Y-m-d H:i:s') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Cache-Control: max-age=1');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+        header('Cache-Control: cache, must-revalidate');
+        header('Pragma: public');
+
+        $writer->save('php://output');
+        exit;
     }
 }

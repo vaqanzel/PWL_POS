@@ -46,11 +46,10 @@ class KategoriController extends Controller
         return DataTables::of($kategoris)
             ->addIndexColumn()->addColumn('aksi', function ($kategori) {
 
-                $btn = '<button onclick="modalAction(\'' . url('/kategori/' . $kategori->kategori_id .'/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/kategori/' . $kategori->kategori_id .'/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/kategori/' . $kategori->kategori_id .'/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
+                $btn = '<button onclick="modalAction(\'' . url('/kategori/' . $kategori->kategori_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/kategori/' . $kategori->kategori_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/kategori/' . $kategori->kategori_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
                 return $btn;
-
             })->rawColumns(['aksi'])
             ->make(true);
     }
@@ -226,26 +225,26 @@ class KategoriController extends Controller
                 'kategori_nama' => 'required|string|max:100',
                 'kategori_kode' => 'required|string|max:5|unique:m_kategori,kategori_kode,' . $id . ',kategori_id'
             ];
-    
+
             $messages = [
                 'kategori_kode.unique' => 'Kode Sudah Digunakan'
             ];
-    
+
             $validator = Validator::make($request->all(), $rules, $messages);
-    
+
             if ($validator->fails()) {
                 $errorMessage = 'Validasi Gagal';
                 if ($validator->errors()->has('kategori_kode')) {
                     $errorMessage = 'Validasi Gagal (Kode Sudah Digunakan)';
                 }
-    
+
                 return response()->json([
                     'status' => false,
                     'message' => $errorMessage,
                     'msgField' => $validator->errors()
                 ]);
             }
-    
+
             $kategori = KategoriModel::find($id);
             if ($kategori) {
                 $kategori->update($request->all());
@@ -266,31 +265,31 @@ class KategoriController extends Controller
     }
 
     public function delete_ajax(Request $request, $id)
-{
-    if ($request->ajax() || $request->wantsJson()) {
-        $kategori = KategoriModel::find($id);
-        if ($kategori) {
-            try {
-                $kategori->delete();
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Data berhasil dihapus'
-                ]);
-            } catch (\Illuminate\Database\QueryException $e) {
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            $kategori = KategoriModel::find($id);
+            if ($kategori) {
+                try {
+                    $kategori->delete();
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Data berhasil dihapus'
+                    ]);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Data tidak dapat dihapus karena masih terkait dengan data lain'
+                    ]);
+                }
+            } else {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Data tidak dapat dihapus karena masih terkait dengan data lain'
+                    'message' => 'Data tidak ditemukan'
                 ]);
             }
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data tidak ditemukan'
-            ]);
         }
+        return redirect('/');
     }
-    return redirect('/');
-}
 
 
     // Menghapus data kategori
@@ -365,5 +364,50 @@ class KategoriController extends Controller
             }
         }
         return redirect('/');
+    }
+    public function export_excel()
+    {
+        $kategori = KategoriModel::select('kategori_id', 'kategori_kode', 'kategori_nama')
+            ->orderBy('kategori_id')
+            ->orderBy('kategori_kode')
+            ->get();
+
+        // load library excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet(); //ambil sheet yang aktif
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'Kode kategori');
+        $sheet->setCellValue('C1', 'Nama kategori');
+
+        $sheet->getStyle('A1:C1')->getFont()->setBold(true); //bold header
+        $no = 1;
+        $baris = 2;
+
+        foreach ($kategori as $key => $data) {
+            $sheet->setCellValue('A' . $baris, $no);
+            $sheet->setCellValue('B' . $baris, $data->kategori_kode);
+            $sheet->setCellValue('C' . $baris, $data->kategori_nama);
+            $no++;
+            $baris++;
+        }
+
+        foreach (range('A', 'C') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+        $sheet->setTitle('Data kategori');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $filename = 'Data kategori_' . date('Y-m-d H:i:s') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Cache-Control: max-age=1');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+        header('Cache-Control: cache, must-revalidate');
+        header('Pragma: public');
+
+        $writer->save('php://output');
+        exit;
     }
 }

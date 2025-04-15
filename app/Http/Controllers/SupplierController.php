@@ -45,9 +45,9 @@ class SupplierController extends Controller
 
         return DataTables::of($suppliers)
             ->addIndexColumn()->addColumn('aksi', function ($supplier) {
-                $btn = '<button onclick="modalAction(\'' . url('/supplier/' . $supplier->supplier_id .'/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/supplier/' . $supplier->supplier_id .'/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/supplier/' . $supplier->supplier_id .'/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
+                $btn = '<button onclick="modalAction(\'' . url('/supplier/' . $supplier->supplier_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/supplier/' . $supplier->supplier_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/supplier/' . $supplier->supplier_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
                 return $btn;
             })->rawColumns(['aksi'])
             ->make(true);
@@ -273,33 +273,33 @@ class SupplierController extends Controller
     }
 
     public function delete_ajax(Request $request, $id)
-{
-    // Cek apakah request berasal dari AJAX
-    if ($request->ajax() || $request->wantsJson()) {
-        $supplier = SupplierModel::find($id);
-        if ($supplier) {
-            try {
-                $supplier->delete();
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Data berhasil dihapus'
-                ]);
-            } catch (\Illuminate\Database\QueryException $e) {
-                // Tangani error ketika masih ada relasi di tabel lain
+    {
+        // Cek apakah request berasal dari AJAX
+        if ($request->ajax() || $request->wantsJson()) {
+            $supplier = SupplierModel::find($id);
+            if ($supplier) {
+                try {
+                    $supplier->delete();
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Data berhasil dihapus'
+                    ]);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Tangani error ketika masih ada relasi di tabel lain
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Data tidak dapat dihapus karena masih terkait dengan data lain.'
+                    ]);
+                }
+            } else {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Data tidak dapat dihapus karena masih terkait dengan data lain.'
+                    'message' => 'Data tidak ditemukan'
                 ]);
             }
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'Data tidak ditemukan'
-            ]);
         }
+        return redirect('/');
     }
-    return redirect('/');
-}
 
 
     // Menghapus data supplier
@@ -375,5 +375,52 @@ class SupplierController extends Controller
             }
         }
         return redirect('/');
-    }    
+    }
+    public function export_excel()
+    {
+        $supplier = SupplierModel::select('supplier_id', 'supplier_kode', 'supplier_nama', 'supplier_alamat')
+            ->orderBy('supplier_id')
+            ->orderBy('supplier_kode')
+            ->get();
+
+        // load library excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet(); //ambil sheet yang aktif
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'Kode supplier');
+        $sheet->setCellValue('C1', 'Nama supplier');
+        $sheet->setCellValue('D1', 'Alamat supplier');
+
+        $sheet->getStyle('A1:D1')->getFont()->setBold(true); //bold header
+        $no = 1;
+        $baris = 2;
+
+        foreach ($supplier as $key => $data) {
+            $sheet->setCellValue('A' . $baris, $no);
+            $sheet->setCellValue('B' . $baris, $data->supplier_kode);
+            $sheet->setCellValue('C' . $baris, $data->supplier_nama);
+            $sheet->setCellValue('D' . $baris, $data->supplier_alamat);
+            $no++;
+            $baris++;
+        }
+        foreach (range('A', 'D') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $sheet->setTitle('Data supplier');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $filename = 'Data supplier_' . date('Y-m-d H:i:s') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Cache-Control: max-age=1');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+        header('Cache-Control: cache, must-revalidate');
+        header('Pragma: public');
+
+        $writer->save('php://output');
+        exit;
+    }
 }

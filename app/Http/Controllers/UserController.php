@@ -47,10 +47,10 @@ class UserController extends Controller
 
         return DataTables::of($users)
             ->addIndexColumn()->addColumn('aksi', function ($user) {
-                
-                $btn = '<button onclick="modalAction(\'' . url('/user/' . $user->user_id .'/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/user/' . $user->user_id .'/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
-                $btn .= '<button onclick="modalAction(\'' . url('/user/' . $user->user_id .'/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
+
+                $btn = '<button onclick="modalAction(\'' . url('/user/' . $user->user_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/user/' . $user->user_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
+                $btn .= '<button onclick="modalAction(\'' . url('/user/' . $user->user_id . '/delete_ajax') . '\')" class="btn btn-danger btn-sm">Hapus</button> ';
                 return $btn;
             })->rawColumns(['aksi'])
             ->make(true);
@@ -377,5 +377,55 @@ class UserController extends Controller
             }
         }
         return redirect('/');
+    }
+    public function export_excel()
+    {
+        $user = UserModel::select('level_id', 'user_id', 'username', 'nama')
+            ->orderBy('level_id')
+            ->orderBy('nama')
+            ->with('level')
+            ->get();
+
+        // load library excel
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet(); //ambil sheet yang aktif
+        $sheet->setCellValue('A1', 'No');
+        $sheet->setCellValue('B1', 'ID');
+        $sheet->setCellValue('C1', 'Username');
+        $sheet->setCellValue('D1', 'Nama');
+        $sheet->setCellValue('E1', 'level');
+
+        $sheet->getStyle('A1:E1')->getFont()->setBold(true); //bold header
+        $no = 1;
+        $baris = 2;
+
+        foreach ($user as $key => $data) {
+            $sheet->setCellValue('A' . $baris, $no);
+            $sheet->setCellValue('B' . $baris, $data->user_id);
+            $sheet->setCellValue('C' . $baris, $data->username);
+            $sheet->setCellValue('D' . $baris, $data->nama);
+            $sheet->setCellValue('E' . $baris, $data->level->level_nama);
+            $no++;
+            $baris++;
+        }
+        foreach (range('A', 'E') as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $sheet->setTitle('Data user');
+        $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $filename = 'Data user_' . date('Y-m-d H:i:s') . '.xlsx';
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $filename . '"');
+        header('Cache-Control: max-age=0');
+        header('Cache-Control: max-age=1');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+        header('Cache-Control: cache, must-revalidate');
+        header('Pragma: public');
+
+        $writer->save('php://output');
+        exit;
     }
 }
