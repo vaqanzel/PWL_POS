@@ -330,13 +330,13 @@ class UserController extends Controller
     }
     public function import_ajax(Request $request)
     {
-        if ($request->ajax() || $request->wantsJson()) {
+        if($request->ajax() || $request->wantsJson()){
             $rules = [
                 // validasi file harus xls atau xlsx, max 1MB
                 'file_user' => ['required', 'mimes:xlsx', 'max:1024']
             ];
             $validator = Validator::make($request->all(), $rules);
-            if ($validator->fails()) {
+            if($validator->fails()){
                 return response()->json([
                     'status' => false,
                     'message' => 'Validasi Gagal',
@@ -350,27 +350,28 @@ class UserController extends Controller
             $sheet = $spreadsheet->getActiveSheet(); // ambil sheet yang aktif
             $data = $sheet->toArray(null, false, true, true); // ambil data excel
             $insert = [];
-            if (count($data) > 1) { // jika data lebih dari 1 baris
+            if(count($data) > 1){ // jika data lebih dari 1 baris
                 foreach ($data as $baris => $value) {
-                    if ($baris > 1) { // baris ke 1 adalah header, maka lewati
+                    if($baris > 1){ // baris ke 1 adalah header, maka lewati
                         $insert[] = [
-                            'level_id' => $value['A'],
-                            'username' => $value['B'],
+                            'username' => $value['A'],
+                            'password' => $value['B'],
                             'nama' => $value['C'],
-                            'password' => $value['D'],
+                            'level_id' => $value['D'],
                             'created_at' => now(),
+                            'updated_at' => now(),
                         ];
                     }
                 }
-                if (count($insert) > 0) {
+                if(count($insert) > 0){
                     // insert data ke database, jika data sudah ada, maka diabaikan
-                    BarangModel::insertOrIgnore($insert);
+                    UserModel::insert($insert);
                 }
                 return response()->json([
                     'status' => true,
                     'message' => 'Data berhasil diimport'
                 ]);
-            } else {
+            }else{
                 return response()->json([
                     'status' => false,
                     'message' => 'Tidak ada data yang diimport'

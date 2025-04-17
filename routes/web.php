@@ -4,6 +4,7 @@ use App\Http\Controllers\BarangController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\LevelController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PenjualanController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SupplierController;
@@ -25,6 +26,14 @@ Route::middleware(['auth'])->group(function () { // artinya semua route di dalam
 
     // masukkan semua route yang perlu autentikasi di sini
     Route::get('/', [WelcomeController::class, 'index']);
+   
+   
+    Route::group(['prefix' => 'profile'], function () {
+        Route::get('/', [ProfileController::class, 'show']);
+        Route::get('/edit', [ProfileController::class, 'edit']);
+        Route::put('/', [ProfileController::class, 'update'])->name('profile.upload'); 
+        Route::delete('/delete-picture', [ProfileController::class, 'deletePicture'])->name('profile.delete-picture');
+    });
 
     Route::middleware(['authorize:ADM'])->group(function () {
         Route::group(['prefix' => 'user'], function () {

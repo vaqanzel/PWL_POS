@@ -7,6 +7,22 @@
                 </button> </div>
         </div>
     </div>
+
+    <!-- Sidebar user panel-->
+    <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+        <div class="image">
+            <a onclick="modalAction('{{ url('/profile') }}')">
+                <img src="{{ asset(auth()->user()->profile_picture ? 'storage/' . auth()->user()->profile_picture : 'img/user.png') }}"
+                    class="img-circle elevation-2"
+                    style="width: 40px; height: 40px; object-fit: cover; border-radius: 50%;" alt="User Image">
+            </a>
+        </div>
+        <div class="info">
+            <a onclick="modalAction('{{ url('/profile') }}')" class="d-block">{{auth()->user()->nama}}</a>
+        </div>
+    </div>
+
+
     <!-- Sidebar Menu -->
     <nav class="mt-2">
         <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
