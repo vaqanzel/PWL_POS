@@ -38,8 +38,8 @@ class LevelController extends Controller
     public function list(Request $request)
     {
         $levels = LevelModel::select('level_id', 'level_nama', 'level_kode');
-
-        return DataTables::of($levels)
+       
+               return DataTables::of($levels)
             ->addIndexColumn()->addColumn('aksi', function ($level) {
                 $btn = '<button onclick="modalAction(\'' . url('/level/' . $level->level_id . '/show_ajax') . '\')" class="btn btn-info btn-sm">Detail</button> ';
                 $btn .= '<button onclick="modalAction(\'' . url('/level/' . $level->level_id . '/edit_ajax') . '\')" class="btn btn-warning btn-sm">Edit</button> ';
