@@ -9,7 +9,7 @@
             <div class="card-tools"></div>
         </div>
         <div class="card-body">
-            Selamat datang, ini halaman utama
+            Selamat datang di halaman utama
         </div>
 
         <div class="container-fluid">
