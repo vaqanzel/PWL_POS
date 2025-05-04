@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,9 +13,35 @@ class BarangModel extends Model
     protected $table = 'm_barang';
     protected $primaryKey = 'barang_id';
 
-    protected $fillable = ['kategori_id', 'barang_nama', 'barang_kode', 'harga_beli', 'harga_jual'];
+    protected $fillable = ['kategori_id', 'barang_nama', 'barang_kode', 'harga_beli', 'harga_jual', 'image'];
 
     public function kategori(): BelongsTo{
         return $this->belongsTo(KategoriModel::class, 'kategori_id', 'kategori_id');
     }
+
+    protected function image(): Attribute
+    {
+        return Attribute::make(
+            get: fn($image) => url('/storage/posts/' . $image),
+        );
+    }
+
+    public function stok()
+    {
+        return $this->hasMany(StokModel::class, 'barang_id', 'barang_id');
+    }
+
+    public function penjualan_detail()
+    {
+        return $this->hasMany(PenjualanDetailModel::class, 'barang_id', 'barang_id');
+    }
+
+    public function getRealStokAttribute()
+{
+    $stokMasuk = $this->stok()->sum('stok_jumlah');
+    $stokKeluar = PenjualanDetailModel::where('barang_id', $this->barang_id)->sum('jumlah');
+
+    return $stokMasuk - $stokKeluar;
+}
+
 }

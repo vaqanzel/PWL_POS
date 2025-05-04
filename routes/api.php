@@ -71,3 +71,10 @@ Route::put('supplier/{supplier}', [SupplierController::class, 'update']);
 Route::delete('supplier/{supplier}', [SupplierController::class, 'destroy']);
 
 
+Route::post('/register1', App\Http\Controllers\Api\RegisterController::class)->name('register1');
+
+//t_penjualan
+use App\Http\Controllers\Api\PenjualanController;
+
+Route::post('/penjualan', [PenjualanController::class, 'store']);
+Route::get('/penjualan/{penjualan}', [PenjualanController::class, 'show']);
