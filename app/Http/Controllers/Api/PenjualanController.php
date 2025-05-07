@@ -50,4 +50,19 @@ class PenjualanController extends Controller
     {
         return $penjualan;
     }
+    public function update(Request $request, PenjualanModel $penjualan)
+    {
+        $penjualan->update($request->all());
+        return $penjualan;
+    }
+    
+
+    public function destroy(PenjualanModel $penjualan)
+    {
+        $penjualan->delete();
+        return response()->json([
+            'success' => true,
+            'message' => 'Data terhapus',
+        ]);
+    }
 }
